@@ -16,36 +16,107 @@ admin.initializeApp({
 });
 
 app.use(cors());
-var jsonParser = bodyParser.json()
+app.use(express.json());
 
-app.get("/status", (req, res) => {
+app.get("/status", (_req, res) => {
     res.send("ckeck Status");
 });
 
-// Custom Verification Link
-app.post('/VerificationLink', jsonParser, async (req, res) => {
-  const userData = req.body;
-  console.log(userData);
-  const actionCodeSettings = {
-    url: `<hosted_firebase_url_link>`,
-    handleCodeInApp: true,
-    android: {
-      packageName: '<project_id>'
-    }
-  };
-  admin
-  .auth()
-  .generateSignInWithEmailLink(userData.email, actionCodeSettings)
-  .then(async (link) => {
-      // We got the Embedded Link (Now we can use this link and send the mail to the user
-      // for verifing the Email/account). To send custom mail you can use nodemailer or mail gun.
+app.post("/edit", async (req, res) => {
+  const { uid, firstName, lastName, contactNumber } = req.body;
+
+  try {
+    const snapshot = await admin.firestore().collection("profiles").where("profileId", "==", uid).get();
+    snapshot.forEach((doc) => {
+      admin.firestore().collection("profiles").doc(doc.id).update({
+        firstName: firstName, 
+        lastName: lastName, 
+        contactNumber: contactNumber,
+      })
+        .then(() => {
+          res.status(200).json({
+            message: "Successfully updated user profile"
+          })
+        })
+        .catch((error) => {
+          console.error(error);
+          res.status(400).json({
+            error: error
+          })
+        })
+    })
+  } catch (error) {
+
+  }
+})
+
+app.delete("/delete", async (req, res) => {
+  const { uid } = req.body;
+
+  try {
+    const snapshot = await admin.firestore().collection("profiles").where("profileId", "==", uid).get();
+    snapshot.forEach((doc) => {
+      admin.firestore().collection("profiles").doc(doc.id).delete()
+        .then(() => {
+          admin.auth().deleteUser(uid)
+            .then(() => {
+              res.status(200).json({
+                message: "User successfully deleted"
+              })
+            })
+            .catch((error) => {
+              res.status(400).json({
+                error: error
+              })
+            }) 
+        })
+        .catch((error) => {
+          console.error(error);
+        })
+    })
+  } catch (error) {
+    res.status(400).json({
+      error: error
+    })
+  }
+})
+
+app.patch("/enable", (req, res) => {
+  const { uid } = req.body;
+
+  admin.auth().updateUser(uid, {
+    disabled: false,
   })
-  .catch((error) => {
-    res.json({
-      error: false,
-      message: error
+    .then((userRecord) => {
+      res.status(200).json({
+        message: "Successfully enabled user account",
+        result: userRecord
+      });
+    })
+    .catch((error) => {
+      res.status(400).json({
+        error
+      });
+    })
+})
+
+app.patch("/disable", (req, res) => {
+  const { uid } = req.body;
+
+  admin.auth().updateUser(uid, {
+    disabled: true,
   })
- });
+    .then((userRecord) => {
+      res.status(200).json({
+        message: "Successfully disabled user account",
+        result: userRecord
+      });
+    })
+    .catch((error) => {
+      res.status(400).json({
+        error
+      });
+    })
 })
 
 app.listen(route, () => console.log(`Server running at port ${route}`))
