@@ -22,6 +22,29 @@ app.get("/status", (_req, res) => {
     res.send("ckeck Status");
 });
 
+app.get("/users", (_req, res) => {
+  admin.auth().listUsers()
+    .then((result) => {
+      const users = result.users.map((user) => {
+        return {
+          uid: user.uid,
+          email: user.email,
+          emailVerified: user.emailVerified,
+          disabled: user.disabled,
+        }
+      })
+
+      res.json({
+        result: users
+      })
+    })
+    .catch((error) => {
+      res.json({
+        error
+      })
+    })
+})
+
 app.post("/edit", async (req, res) => {
   const { uid, firstName, lastName, contactNumber } = req.body;
 
