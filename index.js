@@ -40,7 +40,7 @@ app.get("/users", (_req, res) => {
     })
     .catch((error) => {
       res.json({
-        error
+        message: error
       })
     })
 })
@@ -64,7 +64,7 @@ app.post("/edit", async (req, res) => {
         .catch((error) => {
           console.error(error);
           res.status(400).json({
-            error: error
+            message: error
           })
         })
     })
@@ -77,29 +77,31 @@ app.delete("/delete/:uid", async (req, res) => {
   const { uid } = req.params;
 
   try {
-    const snapshot = await admin.firestore().collection("profiles").where("profileId", "==", uid).get();
-    snapshot.forEach((doc) => {
-      admin.firestore().collection("profiles").doc(doc.id).delete()
-        .then(() => {
-          admin.auth().deleteUser(uid)
-            .then(() => {
-              res.status(200).json({
-                message: "User successfully deleted"
+    admin.auth().deleteUser(uid)
+      .then(async () => {
+        const snapshot = await admin.firestore().collection("profiles").where("profileId", "==", uid).get();
+        snapshot.forEach((doc) => {
+          admin.firestore().collection("profiles").doc(doc.id).delete()
+            .then(() => console.log("DELETED"))
+            .catch((error) => {
+              console.error(error);
+              res.status(400).json({
+                message: error
               })
             })
-            .catch((error) => {
-              res.status(400).json({
-                error: error
-              })
-            }) 
         })
-        .catch((error) => {
-          console.error(error);
+        res.status(200).json({
+          message: "User successfully deleted"
         })
-    })
+      })
+      .catch((error) => {
+        res.status(400).json({
+          message: error
+        })
+      })
   } catch (error) {
     res.status(400).json({
-      error: error
+      message: error
     })
   }
 })
