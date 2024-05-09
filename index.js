@@ -87,15 +87,14 @@ app.patch("/enable", (req, res) => {
   admin.auth().updateUser(uid, {
     disabled: false,
   })
-    .then((userRecord) => {
+    .then(() => {
       res.status(200).json({
         message: "Successfully enabled user account",
-        result: userRecord
       });
     })
     .catch((error) => {
       res.status(400).json({
-        error
+        message: error
       });
     })
 })
@@ -106,15 +105,14 @@ app.patch("/disable", (req, res) => {
   admin.auth().updateUser(uid, {
     disabled: true,
   })
-    .then((userRecord) => {
+    .then(() => {
       res.status(200).json({
         message: "Successfully disabled user account",
-        result: userRecord
       });
     })
     .catch((error) => {
       res.status(400).json({
-        error
+        message: error
       });
     })
 })
