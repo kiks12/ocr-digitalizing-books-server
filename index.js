@@ -73,8 +73,8 @@ app.post("/edit", async (req, res) => {
   }
 })
 
-app.delete("/delete", async (req, res) => {
-  const { uid } = req.body;
+app.delete("/delete/:uid", async (req, res) => {
+  const { uid } = req.params;
 
   try {
     const snapshot = await admin.firestore().collection("profiles").where("profileId", "==", uid).get();
