@@ -22,6 +22,52 @@ app.get("/status", (_req, res) => {
     res.send("ckeck Status");
 });
 
+app.post("/users/create", async (req, res) => {
+  const { firstName, lastName, contactNumber, admin : isAdmin, email, password } = req.body
+
+  try {
+    admin.auth().createUser({
+      email: email, 
+      password: password,
+      displayName: `${firstName} ${lastName}`
+    })
+      .then((result) => {
+        admin.firestore().collection("profiles").doc().set({
+          firstName: firstName,
+          lastName: lastName,
+          contactNumber: contactNumber,
+          walkthrough: true,
+          onboarding: true,
+          profileId: result.uid,
+          admin: isAdmin == "false" ? false : true
+        })
+          .then((_result) => {
+            res.json({
+              message: "Successfully created new account"
+            })
+          })
+          .catch((err) => {
+            console.error(err)
+            res.status(400).json({
+              message: error
+            })
+          })
+      })
+      .catch((err) => {
+        console.error(err)
+            res.status(400).json({
+              message: error
+            })
+      })
+  } catch (error) {
+    console.error(error)
+    res.status(400).json({
+      message: error
+    })
+  }
+
+})
+
 app.get("/users", (_req, res) => {
   admin.auth().listUsers()
     .then(async (result) => {
