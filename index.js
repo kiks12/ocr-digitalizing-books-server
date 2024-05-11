@@ -24,21 +24,34 @@ app.get("/status", (_req, res) => {
 
 app.get("/users", (_req, res) => {
   admin.auth().listUsers()
-    .then((result) => {
-      const users = result.users.map((user) => {
-        return {
-          uid: user.uid,
-          email: user.email,
-          emailVerified: user.emailVerified,
-          disabled: user.disabled,
-        }
-      })
+    .then(async (result) => {
+      const users = await Promise.all(result.users.map(async (user) => {
+        const userFromDB = await admin.firestore().collection("profiles").where("profileId", "==",user.uid).get()
+        let d = {}
+
+        userFromDB.forEach((doc) => {
+          const singleUser = doc.data()
+          
+          d = {
+            uid: user.uid,
+            email: user.email,
+            emailVerified: user.emailVerified,
+            disabled: user.disabled,
+            admin: singleUser.admin ?? false,
+            firstName: singleUser.firstName,
+            lastName: singleUser.lastName
+          }
+        })
+
+        return d
+      }))
 
       res.json({
         result: users
       })
     })
     .catch((error) => {
+      console.error(error)
       res.json({
         message: error
       })
