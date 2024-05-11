@@ -68,7 +68,7 @@ app.post("/edit", async (req, res) => {
         firstName: firstName, 
         lastName: lastName, 
         contactNumber: contactNumber,
-        admin: isAdmin,
+        admin: isAdmin === "true" ? true : false,
       }, {
         merge: true
       })
